@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bookstore.mapper.BookMapper">
+
+    <resultMap id="bookResultMap" type="com.bookstore.entity.Book">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="author" property="author"/>
+        <result column="publisher" property="publisher"/>
+        <result column="isbn" property="isbn"/>
+        <result column="category_id" property="categoryId"/>
+        <result column="cover" property="cover"/>
+        <result column="price" property="price"/>
+        <result column="original_price" property="originalPrice"/>
+        <result column="stock" property="stock"/>
+        <result column="sales" property="sales"/>
+        <result column="description" property="description"/>
+        <result column="status" property="status"/>
+        <result column="publish_date" property="publishDate"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 分页查询图书 -->
+    <select id="selectBookPage" resultMap="bookResultMap">
+        SELECT * FROM book
+        WHERE is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (title LIKE CONCAT('%', #{keyword}, '%')
+                 OR author LIKE CONCAT('%', #{keyword}, '%')
+                 OR publisher LIKE CONCAT('%', #{keyword}, '%')
+                 OR isbn LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="categoryId != null">
+            AND category_id = #{categoryId}
+        </if>
+        <if test="minPrice != null">
+            AND price &gt;= #{minPrice}
+        </if>
+        <if test="maxPrice != null">
+            AND price &lt;= #{maxPrice}
+        </if>
+        <if test="sortField != null and sortField != ''">
+            ORDER BY ${sortField}
+            <if test="sortOrder != null and sortOrder != ''">
+                ${sortOrder}
+            </if>
+        </if>
+        <if test="sortField == null or sortField == ''">
+            ORDER BY create_time DESC
+        </if>
+    </select>
+
+    <!-- 热门图书 -->
+    <select id="selectHotBooks" resultMap="bookResultMap">
+        SELECT * FROM book WHERE is_deleted = 0 AND status = 1
+        ORDER BY sales DESC LIMIT #{limit}
+    </select>
+
+    <!-- 新书推荐 -->
+    <select id="selectNewBooks" resultMap="bookResultMap">
+        SELECT * FROM book WHERE is_deleted = 0 AND status = 1
+        ORDER BY publish_date DESC, create_time DESC LIMIT #{limit}
+    </select>
+
+    <!-- 增加销量 -->
+    <update id="addSales">
+        UPDATE book SET sales = sales + #{quantity} WHERE id = #{bookId}
+    </update>
+
+    <!-- 减少库存 -->
+    <update id="reduceStock">
+        UPDATE book SET stock = stock - #{quantity} WHERE id = #{bookId} AND stock &gt;= #{quantity}
+    </update>
+
+    <!-- 各分类图书数量及销量分布 -->
+    <select id="selectCategoryDistribution" resultType="java.util.Map">
+        SELECT c.name AS categoryName,
+               COUNT(b.id) AS bookCount,
+               COALESCE(SUM(b.sales), 0) AS totalSales
+        FROM category c
+        LEFT JOIN book b ON c.id = b.category_id AND b.is_deleted = 0
+        WHERE c.is_deleted = 0 AND c.status = 1
+        GROUP BY c.id, c.name, c.sort
+        ORDER BY c.sort
+    </select>
+
+</mapper>

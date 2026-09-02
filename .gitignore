@@ -1,0 +1,34 @@
+# ===== 环境/工具目录 =====
+.codebuddy/
+.workbuddy/
+.maven-tmp/
+maven-bin.zip
+
+# ===== 后端 (Spring Boot / Maven) =====
+bookstore-backend/target/
+*.class
+*.jar
+*.war
+*.log
+hs_err_pid*
+
+# ===== 前端 (Vue / Vite) =====
+bookstore-frontend/node_modules/
+bookstore-frontend/dist/
+bookstore-frontend/.vite/
+*.local
+.DS_Store
+
+# ===== IDE / 系统文件 =====
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+Thumbs.db
+
+# ===== 敏感配置（如需公开示例可自行放开） =====
+# application-local.yml
+# .env

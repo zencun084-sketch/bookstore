@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bookstore.mapper.OrdersMapper">
+
+    <resultMap id="orderResultMap" type="com.bookstore.entity.Orders">
+        <id column="id" property="id"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="user_id" property="userId"/>
+        <result column="total_amount" property="totalAmount"/>
+        <result column="status" property="status"/>
+        <result column="receiver" property="receiver"/>
+        <result column="phone" property="phone"/>
+        <result column="address" property="address"/>
+        <result column="remark" property="remark"/>
+        <result column="pay_time" property="payTime"/>
+        <result column="ship_time" property="shipTime"/>
+        <result column="finish_time" property="finishTime"/>
+        <result column="cancel_time" property="cancelTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="user_nickname" property="userNickname"/>
+    </resultMap>
+
+    <!-- 分页查询订单(含用户昵称) -->
+    <select id="selectOrderPage" resultMap="orderResultMap">
+        SELECT o.*, u.nickname AS user_nickname
+        FROM orders o
+        LEFT JOIN user u ON o.user_id = u.id AND u.is_deleted = 0
+        WHERE o.is_deleted = 0
+        <if test="status != null">
+            AND o.status = #{status}
+        </if>
+        <if test="orderNo != null and orderNo != ''">
+            AND o.order_no LIKE CONCAT('%', #{orderNo}, '%')
+        </if>
+        ORDER BY o.create_time DESC
+    </select>
+
+    <!-- 今日销售额 -->
+    <select id="selectTodaySales" resultType="java.math.BigDecimal">
+        SELECT IFNULL(SUM(total_amount), 0) FROM orders
+        WHERE is_deleted = 0 AND status IN (1, 2, 3)
+        AND DATE(create_time) = CURDATE()
+    </select>
+
+    <!-- 今日订单数 -->
+    <select id="selectTodayOrderCount" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM orders
+        WHERE is_deleted = 0
+        AND DATE(create_time) = CURDATE()
+    </select>
+
+    <!-- 近N天订单趋势 -->
+    <select id="selectOrderTrend" resultType="java.util.Map">
+        SELECT DATE(create_time) AS date, COUNT(*) AS count
+        FROM orders
+        WHERE is_deleted = 0
+        AND create_time &gt;= DATE_SUB(CURDATE(), INTERVAL #{days} DAY)
+        GROUP BY DATE(create_time)
+        ORDER BY date ASC
+    </select>
+
+    <!-- 近N天销售趋势 -->
+    <select id="selectSalesTrend" resultType="java.util.Map">
+        SELECT DATE(create_time) AS date, IFNULL(SUM(total_amount), 0) AS amount
+        FROM orders
+        WHERE is_deleted = 0 AND status IN (1, 2, 3)
+        AND create_time &gt;= DATE_SUB(CURDATE(), INTERVAL #{days} DAY)
+        GROUP BY DATE(create_time)
+        ORDER BY date ASC
+    </select>
+
+    <!-- 热门图书销量排行 -->
+    <select id="selectHotBooksRank" resultType="java.util.Map">
+        SELECT oi.book_title AS title, SUM(oi.quantity) AS sales, SUM(oi.price * oi.quantity) AS amount
+        FROM order_item oi
+        INNER JOIN orders o ON oi.order_id = o.id AND o.is_deleted = 0 AND o.status IN (1, 2, 3)
+        GROUP BY oi.book_id, oi.book_title
+        ORDER BY sales DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

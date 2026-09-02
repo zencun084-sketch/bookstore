@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bookstore.mapper.CartItemMapper">
+
+    <resultMap id="cartItemResultMap" type="com.bookstore.entity.CartItem">
+        <id column="id" property="id"/>
+        <result column="cart_id" property="cartId"/>
+        <result column="book_id" property="bookId"/>
+        <result column="quantity" property="quantity"/>
+        <result column="checked" property="checked"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <association property="book" javaType="com.bookstore.entity.Book">
+            <id column="b_id" property="id"/>
+            <result column="b_title" property="title"/>
+            <result column="b_author" property="author"/>
+            <result column="b_cover" property="cover"/>
+            <result column="b_price" property="price"/>
+            <result column="b_stock" property="stock"/>
+            <result column="b_status" property="status"/>
+        </association>
+    </resultMap>
+
+    <!-- 查询购物车项(含图书) -->
+    <select id="selectCartItemsWithBook" resultMap="cartItemResultMap">
+        SELECT ci.*,
+               b.id AS b_id, b.title AS b_title, b.author AS b_author,
+               b.cover AS b_cover, b.price AS b_price, b.stock AS b_stock, b.status AS b_status
+        FROM cart_item ci
+        LEFT JOIN book b ON ci.book_id = b.id AND b.is_deleted = 0
+        WHERE ci.cart_id = #{cartId}
+        ORDER BY ci.create_time DESC
+    </select>
+
+    <!-- 查询选中的购物车项(含图书) -->
+    <select id="selectCheckedCartItemsWithBook" resultMap="cartItemResultMap">
+        SELECT ci.*,
+               b.id AS b_id, b.title AS b_title, b.author AS b_author,
+               b.cover AS b_cover, b.price AS b_price, b.stock AS b_stock, b.status AS b_status
+        FROM cart_item ci
+        LEFT JOIN book b ON ci.book_id = b.id AND b.is_deleted = 0
+        WHERE ci.cart_id = #{cartId} AND ci.checked = 1
+        ORDER BY ci.create_time DESC
+    </select>
+
+</mapper>

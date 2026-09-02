@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bookstore.mapper.ReviewMapper">
+
+    <resultMap id="reviewResultMap" type="com.bookstore.entity.Review">
+        <id column="id" property="id"/>
+        <result column="book_id" property="bookId"/>
+        <result column="user_id" property="userId"/>
+        <result column="order_id" property="orderId"/>
+        <result column="rating" property="rating"/>
+        <result column="content" property="content"/>
+        <result column="likes" property="likes"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="user_nickname" property="userNickname"/>
+        <result column="user_avatar" property="userAvatar"/>
+        <result column="book_title" property="bookTitle"/>
+    </resultMap>
+
+    <!-- 分页查询评论(含用户信息) -->
+    <select id="selectReviewPage" resultMap="reviewResultMap">
+        SELECT r.*,
+               u.nickname AS user_nickname,
+               u.avatar AS user_avatar,
+               b.title AS book_title
+        FROM review r
+        LEFT JOIN user u ON r.user_id = u.id AND u.is_deleted = 0
+        LEFT JOIN book b ON r.book_id = b.id AND b.is_deleted = 0
+        WHERE r.is_deleted = 0
+        <if test="bookId != null">
+            AND r.book_id = #{bookId}
+        </if>
+        ORDER BY r.create_time DESC
+    </select>
+
+    <!-- 计算图书平均评分 -->
+    <select id="selectAvgRating" resultType="java.lang.Double">
+        SELECT IFNULL(AVG(rating), 0) FROM review
+        WHERE is_deleted = 0 AND status = 1 AND book_id = #{bookId}
+    </select>
+
+</mapper>

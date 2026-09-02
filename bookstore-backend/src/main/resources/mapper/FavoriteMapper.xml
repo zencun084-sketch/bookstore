@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bookstore.mapper.FavoriteMapper">
+
+    <resultMap id="favoriteResultMap" type="com.bookstore.entity.Favorite">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="book_id" property="bookId"/>
+        <result column="create_time" property="createTime"/>
+        <association property="book" javaType="com.bookstore.entity.Book">
+            <id column="b_id" property="id"/>
+            <result column="b_title" property="title"/>
+            <result column="b_author" property="author"/>
+            <result column="b_cover" property="cover"/>
+            <result column="b_price" property="price"/>
+            <result column="b_original_price" property="originalPrice"/>
+            <result column="b_status" property="status"/>
+        </association>
+    </resultMap>
+
+    <!-- 查询用户收藏(含图书信息) -->
+    <select id="selectFavoritesWithBook" resultMap="favoriteResultMap">
+        SELECT f.*,
+               b.id AS b_id, b.title AS b_title, b.author AS b_author,
+               b.cover AS b_cover, b.price AS b_price, b.original_price AS b_original_price, b.status AS b_status
+        FROM favorite f
+        LEFT JOIN book b ON f.book_id = b.id AND b.is_deleted = 0
+        WHERE f.user_id = #{userId}
+        ORDER BY f.create_time DESC
+    </select>
+
+</mapper>
